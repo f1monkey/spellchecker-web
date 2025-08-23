@@ -103,6 +103,11 @@ func (r *Registry) Delete(code string) error {
 		return ErrNotFound
 	}
 
+	err := os.Remove(fullPath(r.dir, code))
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
 	delete(r.items, code)
 
 	return nil
@@ -122,7 +127,7 @@ func (r *Registry) Save(code string) error {
 		return err
 	}
 
-	err = os.WriteFile(path.Join(r.dir, code+extension), data, 0644)
+	err = os.WriteFile(path.Join(r.dir, fileName(code)), data, 0644)
 	if err != nil {
 		return err
 	}
@@ -150,4 +155,12 @@ func findDictionaries(dir string) ([]fs.DirEntry, error) {
 	}
 
 	return result, nil
+}
+
+func fileName(code string) string {
+	return code + extension
+}
+
+func fullPath(dir string, code string) string {
+	return path.Join(dir, fileName(code))
 }

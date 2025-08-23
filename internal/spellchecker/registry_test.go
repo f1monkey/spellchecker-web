@@ -27,7 +27,7 @@ func Test_NewRegistry(t *testing.T) {
 		data, err := json.Marshal(&item)
 		require.NoError(t, err)
 
-		err = os.WriteFile(path.Join(dir, name+extension), data, 0755)
+		err = os.WriteFile(path.Join(dir, fileName(name)), data, 0755)
 		require.NoError(t, err)
 	}
 
@@ -85,7 +85,7 @@ func Test_NewRegistry(t *testing.T) {
 
 		createTestFile(t, dir, "code1")
 
-		err := os.WriteFile(path.Join(dir, "code2"+extension), []byte("qweqwe"), 0755)
+		err := os.WriteFile(path.Join(dir, fileName("code2")), []byte("qweqwe"), 0755)
 		require.NoError(t, err)
 
 		result, err := NewRegistry(context.Background(), dir)
@@ -193,6 +193,29 @@ func Test_Registry_Delete(t *testing.T) {
 
 		require.NotContains(t, r.items, code)
 	})
+
+	t.Run("success, delete file", func(t *testing.T) {
+		t.Parallel()
+
+		dir := t.TempDir()
+		code := "code"
+
+		r, err := NewRegistry(context.Background(), dir)
+		require.NoError(t, err)
+
+		_, err = r.Add(code, Options{Alphabet: "abc"})
+		require.NoError(t, err)
+
+		err = r.Save(code)
+		require.NoError(t, err)
+		require.FileExists(t, path.Join(dir, fileName(code)))
+
+		err = r.Delete(code)
+		require.NoError(t, err)
+		require.NoFileExists(t, path.Join(dir, fileName(code)))
+
+		require.NotContains(t, r.items, code)
+	})
 }
 
 func Test_Registry_Save(t *testing.T) {
@@ -225,7 +248,7 @@ func Test_Registry_Save(t *testing.T) {
 
 		err = r.Save(code)
 		require.NoError(t, err)
-		require.FileExists(t, path.Join(dir, code+extension))
+		require.FileExists(t, path.Join(dir, fileName(code)))
 
 		r2, err := NewRegistry(context.Background(), dir)
 		require.NoError(t, err)
