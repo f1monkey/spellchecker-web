@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"errors"
+	"regexp"
 
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
 	"github.com/swaggest/usecase"
@@ -24,7 +25,7 @@ type DictionaryItemAddResponse struct {
 	Words int `json:"words" description:"Number of phrases successfully added."`
 }
 
-func dictionaryItemAdd(registry *spellchecker.Registry) usecase.Interactor {
+func dictionaryItemAdd(registry *spellchecker.Registry, splitter *regexp.Regexp) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryItemAddRequest, output *DictionaryItemAddResponse) error {
 		sc, err := registry.Get(input.Code)
 		if errors.Is(spellchecker.ErrNotFound, err) {
@@ -37,7 +38,7 @@ func dictionaryItemAdd(registry *spellchecker.Registry) usecase.Interactor {
 
 		for i := range input.Phrases {
 
-			words := wordSymbols.FindAllString(input.Phrases[i].Text, -1)
+			words := splitter.FindAllString(input.Phrases[i].Text, -1)
 			if len(words) == 0 {
 				continue
 			}

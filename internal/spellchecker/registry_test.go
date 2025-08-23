@@ -14,24 +14,9 @@ import (
 func Test_NewRegistry(t *testing.T) {
 	t.Parallel()
 
-	createTestFile := func(t *testing.T, dir string, name string) {
-		t.Helper()
-
-		sc, err := spellchecker.New("abc")
-		require.NoError(t, err)
-
-		item := RegistryItem{
-			Spellchecker: sc,
-		}
-
-		data, err := json.Marshal(&item)
-		require.NoError(t, err)
-
-		err = os.WriteFile(path.Join(dir, fileName(name)), data, 0755)
-		require.NoError(t, err)
-	}
-
 	t.Run("no files", func(t *testing.T) {
+		t.Parallel()
+
 		dir := t.TempDir()
 
 		result, err := NewRegistry(context.Background(), dir)
@@ -41,6 +26,8 @@ func Test_NewRegistry(t *testing.T) {
 	})
 
 	t.Run("one file", func(t *testing.T) {
+		t.Parallel()
+
 		dir := t.TempDir()
 
 		createTestFile(t, dir, "code")
@@ -52,6 +39,8 @@ func Test_NewRegistry(t *testing.T) {
 	})
 
 	t.Run("two files, ok", func(t *testing.T) {
+		t.Parallel()
+
 		dir := t.TempDir()
 
 		createTestFile(t, dir, "code1")
@@ -65,6 +54,8 @@ func Test_NewRegistry(t *testing.T) {
 	})
 
 	t.Run("two files, one has invalid extension", func(t *testing.T) {
+		t.Parallel()
+
 		dir := t.TempDir()
 
 		createTestFile(t, dir, "code1")
@@ -81,6 +72,8 @@ func Test_NewRegistry(t *testing.T) {
 	})
 
 	t.Run("two files, one is corrupted", func(t *testing.T) {
+		t.Parallel()
+
 		dir := t.TempDir()
 
 		createTestFile(t, dir, "code1")
@@ -260,4 +253,21 @@ func Test_Registry_Save(t *testing.T) {
 		require.NoError(t, err)
 		require.Contains(t, r2.items, code)
 	})
+}
+
+func createTestFile(t *testing.T, dir string, name string) {
+	t.Helper()
+
+	sc, err := spellchecker.New("abc")
+	require.NoError(t, err)
+
+	item := RegistryItem{
+		Spellchecker: sc,
+	}
+
+	data, err := json.Marshal(&item)
+	require.NoError(t, err)
+
+	err = os.WriteFile(path.Join(dir, fileName(name)), data, 0755)
+	require.NoError(t, err)
 }

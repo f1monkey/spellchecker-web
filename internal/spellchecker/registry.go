@@ -36,33 +36,26 @@ func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
 		return nil, err
 	}
 
-	items := make(map[string]RegistryItem)
+	result := &Registry{
+		dir:   dir,
+		items: make(map[string]RegistryItem),
+	}
 
 	for _, f := range files {
-		buf, err := os.ReadFile(path.Join(dir, f.Name()))
-		if err != nil {
-			logger.FromContext(ctx).Error("registry: read file err", "file", f, "error", err)
-			continue
-		}
-
-		var item RegistryItem
-
-		if err := json.Unmarshal(buf, &item); err != nil {
-			logger.FromContext(ctx).Error("registry: unable to initalize registry item", "file", f, "error", err)
-			continue
-		}
-
 		code, _ := strings.CutSuffix(f.Name(), extension)
+
+		item, err := result.doLoad(code)
+		if err != nil {
+			logger.FromContext(ctx).Error("registry: dictionary load error", "code", code, "error", err)
+			continue
+		}
 
 		logger.FromContext(ctx).Info("registry: loaded dictionary", "dictionary", code)
 
-		items[code] = item
+		result.items[code] = item
 	}
 
-	return &Registry{
-		dir:   dir,
-		items: items,
-	}, nil
+	return result, nil
 }
 
 func (r *Registry) AutoSave(ctx context.Context, interval time.Duration) {
@@ -180,6 +173,21 @@ func (r *Registry) doSave(code string) error {
 	}
 
 	return nil
+}
+
+func (r *Registry) doLoad(code string) (RegistryItem, error) {
+	buf, err := os.ReadFile(fullPath(r.dir, code))
+	if err != nil {
+		return RegistryItem{}, err
+	}
+
+	var item RegistryItem
+
+	if err := json.Unmarshal(buf, &item); err != nil {
+		return RegistryItem{}, err
+	}
+
+	return item, nil
 }
 
 func findDictionaries(dir string) ([]fs.DirEntry, error) {

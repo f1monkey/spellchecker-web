@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"regexp"
 
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
 	"github.com/go-chi/chi/v5"
@@ -10,32 +11,32 @@ import (
 
 type EmptyResponse struct{}
 
-func Routes(registry *spellchecker.Registry) func(r chi.Router) {
+func Routes(registry *spellchecker.Registry, splitter *regexp.Regexp) func(r chi.Router) {
 	return func(r chi.Router) {
-		r.Route("/dictionaries", dictionaryRoutes(registry))
+		r.Route("/dictionaries", dictionaryRoutes(registry, splitter))
 	}
 }
 
-func dictionaryRoutes(registry *spellchecker.Registry) func(r chi.Router) {
+func dictionaryRoutes(registry *spellchecker.Registry, splitter *regexp.Regexp) func(r chi.Router) {
 	return func(r chi.Router) {
 		r.Method(http.MethodPost, "/{code}", nethttp.NewHandler(
-			dictionaryCreate(registry)),
-		)
+			dictionaryCreate(registry),
+		))
 
 		r.Method(http.MethodDelete, "/{code}", nethttp.NewHandler(
-			dictionaryDelete(registry)),
-		)
+			dictionaryDelete(registry),
+		))
 
 		r.Method(http.MethodPost, "/{code}/save", nethttp.NewHandler(
-			dictionarySave(registry)),
-		)
+			dictionarySave(registry),
+		))
 
 		r.Method(http.MethodPost, "/{code}/add", nethttp.NewHandler(
-			dictionaryItemAdd(registry)),
-		)
+			dictionaryItemAdd(registry, splitter),
+		))
 
 		r.Method(http.MethodPost, "/{code}/fix", nethttp.NewHandler(
-			dictionaryFix(registry)),
-		)
+			dictionaryFix(registry, splitter),
+		))
 	}
 }

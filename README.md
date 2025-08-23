@@ -6,12 +6,13 @@
 
 Before running the service, set the following environment variables:
 
-|Variable        | 	Description | Example |
-|----------------|------------- |---------|
-|SPELLCHECKER_DIR| 	Directory to store dictionaries |	/tmp/spellchecker |
-|SPELLCHECKER_AUTOSAVE_INTERVAL| 	Auto-save interval (Go time.Duration) | 5m |
-|HTTP_ADDR| 	HTTP server address and port | localhost:8011 |
-|LOG_LEVEL| 	Logging level |	info, debug |
+|Variable        | 	Description | Example | Default value | Required |
+|----------------|------------- |---------|---------------|----------|
+|SPELLCHECKER_DIR| 	Directory to store dictionaries |	/tmp/spellchecker | none | yes |
+|SPELLCHECKER_AUTOSAVE_INTERVAL| 	Auto-save interval (Go time.Duration) | 5m | none | no |
+|SPELLCHECKER_WORD_SPLIT_REGEXP| Regular expression used to split phrases by words | ['\pL]+ | ['\pL]+| no |
+|SPELLCHECKER_HTTP_ADDR| 	HTTP server address and port | localhost:8011 | localhost:8011 | no |
+|SPELLCHECKER_LOG_LEVEL| 	Logging level |	error | info | no |
 
 ## Swagger Docs
 

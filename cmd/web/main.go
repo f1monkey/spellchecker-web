@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -33,7 +34,7 @@ func main() {
 
 	ctx = logger.WithContext(
 		ctx,
-		logger.New(GitCommit, os.Getenv("LOG_LEVEL")),
+		logger.New(GitCommit, os.Getenv("SPELLCHECKER_LOG_LEVEL")),
 	)
 
 	registry, err := initRegistry(ctx)
@@ -42,12 +43,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	splitter, err := initWordSpliter()
+	if err != nil {
+		logger.FromContext(ctx).Error("init spellchecker error", "error", err)
+		os.Exit(1)
+	}
+
+	fmt.Println(splitter)
+
 	defer registry.SaveAll(ctx)
 
-	server := server.NewServer(ctx, registry)
+	server := server.NewServer(ctx, registry, splitter)
 
 	addr := defaultServerAddr
-	if a := os.Getenv("HTTP_ADDR"); a != "" {
+	if a := os.Getenv("SPELLCHECKER_HTTP_ADDR"); a != "" {
 		addr = a
 	}
 
@@ -113,6 +122,22 @@ func initRegistry(ctx context.Context) (*spellchecker.Registry, error) {
 	}
 
 	result.AutoSave(ctx, saveInterval)
+
+	return result, nil
+}
+
+var defaultRegexp = regexp.MustCompile(`['\pL]+`)
+
+func initWordSpliter() (*regexp.Regexp, error) {
+	value := os.Getenv("SPELLCHECKER_WORD_SPLIT_REGEXP")
+	if value == "" {
+		return defaultRegexp, nil
+	}
+
+	result, err := regexp.Compile(value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SPELLCHECKER_WORD_SPLIT_REGEXP: %w", err)
+	}
 
 	return result, nil
 }

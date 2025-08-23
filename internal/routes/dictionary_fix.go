@@ -34,9 +34,7 @@ type SpellcheckerSuggestion struct {
 	Score float64 `json:"score" description:"Confidence score of the suggestion."`
 }
 
-var wordSymbols = regexp.MustCompile(`[-\pL]+`)
-
-func dictionaryFix(registry *spellchecker.Registry) usecase.Interactor {
+func dictionaryFix(registry *spellchecker.Registry, splitter *regexp.Regexp) usecase.Interactor {
 	const (
 		errorUnknownWord = "unknown_word"
 		errorInvalidWord = "invalid_word"
@@ -54,7 +52,7 @@ func dictionaryFix(registry *spellchecker.Registry) usecase.Interactor {
 			return nil
 		}
 
-		matches := wordSymbols.FindAllStringIndex(input.Text, -1)
+		matches := splitter.FindAllStringIndex(input.Text, -1)
 		fixes := make([]Fix, 0, len(matches))
 
 		for _, match := range matches {
