@@ -49,8 +49,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(splitter)
-
 	defer registry.SaveAll(ctx)
 
 	server := server.NewServer(ctx, registry, splitter)
