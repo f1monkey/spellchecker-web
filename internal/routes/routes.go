@@ -33,5 +33,9 @@ func dictionaryRoutes(registry *spellchecker.Registry) func(r chi.Router) {
 		r.Method(http.MethodPost, "/{code}/add", nethttp.NewHandler(
 			dictionaryItemAdd(registry)),
 		)
+
+		r.Method(http.MethodPost, "/{code}/fix", nethttp.NewHandler(
+			dictionaryFix(registry)),
+		)
 	}
 }

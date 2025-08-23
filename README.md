@@ -43,8 +43,60 @@ Content-Type: application/json
             "weight": 1
         },
         {
-            "text": "The knight raised his weapon before charging into battle.",
+            "text": "the knight raised his weapon before charging into battle",
             "weight": 1
+        }
+    ]
+}
+```
+
+3) Fix phrase
+```
+POST /v1/dictionaries/my-dictionary/phrase
+Content-Type: application/json
+
+{
+    "text": "the knight raised his waapon befor charging into battl"
+}
+```
+
+Response:
+
+```
+{
+    "fixes": [
+        {
+            "start": 22,
+            "end": 28,
+            "suggestions": [
+                {
+                    "text": "weapon",
+                    "score": 2.7081884344831684
+                }
+            ],
+            "error": "invalid_word"
+        },
+        {
+            "start": 29,
+            "end": 34,
+            "suggestions": [
+                {
+                    "text": "before",
+                    "score": 2.339371734389815
+                }
+            ],
+            "error": "invalid_word"
+        },
+        {
+            "start": 49,
+            "end": 54,
+            "suggestions": [
+                {
+                    "text": "battle",
+                    "score": 2.339371734389815
+                }
+            ],
+            "error": "invalid_word"
         }
     ]
 }

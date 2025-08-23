@@ -2,20 +2,23 @@ package routes
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"unicode/utf8"
 
-	"github.com/f1monkey/spellchecker"
+	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 )
 
-type SpellcheckerFixRequest struct {
+type DictionaryFixRequest struct {
+	Code string `path:"code" minLength:"1"`
+
 	Text  string `json:"text" description:"Phrase to be checked"`
 	Limit int    `json:"limit" default:"5" desciption:"Max suggestions per word"`
 }
 
-type SpellcheckerFixResponse struct {
+type DictionaryFixResponse struct {
 	Fixes []Fix `json:"fixes" description:"List of detected issues."`
 }
 
@@ -33,13 +36,20 @@ type SpellcheckerSuggestion struct {
 
 var wordSymbols = regexp.MustCompile(`[-\pL]+`)
 
-func SpellcheckerFix(sc *spellchecker.Spellchecker) usecase.Interactor {
+func dictionaryFix(registry *spellchecker.Registry) usecase.Interactor {
 	const (
 		errorUnknownWord = "unknown_word"
 		errorInvalidWord = "invalid_word"
 	)
 
-	u := usecase.NewInteractor(func(ctx context.Context, input SpellcheckerFixRequest, output *SpellcheckerFixResponse) error {
+	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryFixRequest, output *DictionaryFixResponse) error {
+		sc, err := registry.Get(input.Code)
+		if errors.Is(spellchecker.ErrNotFound, err) {
+			return status.Wrap(err, status.NotFound)
+		} else if err != nil {
+			return status.Wrap(err, status.Internal)
+		}
+
 		if input.Text == "" {
 			return nil
 		}
