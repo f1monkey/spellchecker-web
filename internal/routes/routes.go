@@ -19,6 +19,10 @@ func Routes(registry *spellchecker.Registry, splitter *regexp.Regexp) func(r chi
 
 func dictionaryRoutes(registry *spellchecker.Registry, splitter *regexp.Regexp) func(r chi.Router) {
 	return func(r chi.Router) {
+		r.Method(http.MethodGet, "/", nethttp.NewHandler(
+			dictionaryList(registry),
+		))
+
 		r.Method(http.MethodPost, "/{code}", nethttp.NewHandler(
 			dictionaryCreate(registry),
 		))
