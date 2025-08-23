@@ -6,10 +6,15 @@ import (
 	"regexp"
 	"unicode/utf8"
 
+	f1mspellchecker "github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 )
+
+type dictionaryGetter interface {
+	Get(code string) (*f1mspellchecker.Spellchecker, error)
+}
 
 type DictionaryFixRequest struct {
 	Code string `path:"code" minLength:"1"`
@@ -34,7 +39,7 @@ type SpellcheckerSuggestion struct {
 	Score float64 `json:"score" description:"Confidence score of the suggestion."`
 }
 
-func dictionaryFix(registry *spellchecker.Registry, splitter *regexp.Regexp) usecase.Interactor {
+func dictionaryFix(registry dictionaryGetter, splitter *regexp.Regexp) usecase.Interactor {
 	const (
 		errorUnknownWord = "unknown_word"
 		errorInvalidWord = "invalid_word"

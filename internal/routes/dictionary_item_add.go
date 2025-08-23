@@ -25,7 +25,7 @@ type DictionaryItemAddResponse struct {
 	Words int `json:"words" description:"Number of phrases successfully added."`
 }
 
-func dictionaryItemAdd(registry *spellchecker.Registry, splitter *regexp.Regexp) usecase.Interactor {
+func dictionaryItemAdd(registry dictionaryGetter, splitter *regexp.Regexp) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryItemAddRequest, output *DictionaryItemAddResponse) error {
 		sc, err := registry.Get(input.Code)
 		if errors.Is(spellchecker.ErrNotFound, err) {
