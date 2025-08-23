@@ -110,11 +110,16 @@ func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker
 	return result, nil
 }
 
-func (r *Registry) Get(code string) *spellchecker.Spellchecker {
+func (r *Registry) Get(code string) (*spellchecker.Spellchecker, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return r.items[code].Spellchecker
+	v, ok := r.items[code]
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	return v.Spellchecker, nil
 }
 
 func (r *Registry) Delete(code string) error {

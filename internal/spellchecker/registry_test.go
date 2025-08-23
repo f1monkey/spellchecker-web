@@ -148,7 +148,10 @@ func Test_Registry_Get(t *testing.T) {
 		_, err = r.Add("code", Options{Alphabet: "abc"})
 		require.NoError(t, err)
 
-		require.NotNil(t, r.Get("code"))
+		v, err := r.Get("code")
+		require.NoError(t, err)
+
+		require.NotNil(t, v)
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -156,7 +159,10 @@ func Test_Registry_Get(t *testing.T) {
 
 		r, err := NewRegistry(context.Background(), t.TempDir())
 		require.NoError(t, err)
-		require.Nil(t, r.Get("code"))
+
+		v, err := r.Get("code")
+		require.ErrorIs(t, err, ErrNotFound)
+		require.Nil(t, v)
 	})
 }
 

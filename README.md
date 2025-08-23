@@ -19,14 +19,33 @@ The OpenAPI (Swagger) documentation is available at /docs.
 
 ## Usage Example
 
-1) Create a dictionary:
+1) Create a dictionary `my-dictionary`:
 
 ```
-POST /v1/dictionaries/{code}
+POST /v1/dictionaries/my-dictionary
 Content-Type: application/json
 
 {
   "alphabet": "abcdefghijklmnopqrstuvwxyz",
   "maxErrors": 2
+}
+```
+
+2) Add some words to `my-dictionary`
+```
+POST /v1/dictionaries/my-dictionary/add
+Content-Type: application/json
+
+{
+    "phrases": [
+        {
+            "text": "weapon",
+            "weight": 1
+        },
+        {
+            "text": "The knight raised his weapon before charging into battle.",
+            "weight": 1
+        }
+    ]
 }
 ```
