@@ -54,6 +54,7 @@ func dictionaryFix(registry dictionaryGetter, splitter *regexp.Regexp) usecase.I
 		}
 
 		if input.Text == "" {
+			output.Fixes = make([]Fix, 0)
 			return nil
 		}
 
