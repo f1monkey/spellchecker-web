@@ -53,12 +53,13 @@ func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
 
 		code, _ := strings.CutSuffix(f.Name(), extension)
 
-		logger.FromContext(ctx).Info("registry: loaded dictionary", "code", code)
+		logger.FromContext(ctx).Info("registry: loaded dictionary", "dictionary", code)
 
 		items[code] = item
 	}
 
 	return &Registry{
+		dir:   dir,
 		items: items,
 	}, nil
 }
@@ -103,6 +104,28 @@ func (r *Registry) Delete(code string) error {
 	}
 
 	delete(r.items, code)
+
+	return nil
+}
+
+func (r *Registry) Save(code string) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	item, ok := r.items[code]
+	if !ok {
+		return ErrNotFound
+	}
+
+	data, err := json.Marshal(&item)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(path.Join(r.dir, code+extension), data, 0644)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

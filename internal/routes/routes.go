@@ -25,5 +25,9 @@ func dictionaryRoutes(registry *spellchecker.Registry) func(r chi.Router) {
 		r.Method(http.MethodDelete, "/{code}", nethttp.NewHandler(
 			dictionaryDelete(registry)),
 		)
+
+		r.Method(http.MethodPost, "/{code}/save", nethttp.NewHandler(
+			dictionarySave(registry)),
+		)
 	}
 }

@@ -89,7 +89,7 @@ func initRegistry(ctx context.Context) (*spellchecker.Registry, error) {
 		return nil, fmt.Errorf("env SPELLCHECKER_DIR must be provided")
 	}
 
-	if err := os.MkdirAll(dir, 0644); err != nil {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, fmt.Errorf("unable to create dir %s: %w", dir, err)
 	}
 
