@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -9,18 +10,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/f1monkey/spellchecker"
 	server "github.com/f1monkey/spellchecker-web"
 	"github.com/f1monkey/spellchecker-web/internal/logger"
+	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
 )
 
 var GitCommit string = "dev"
 
 const (
 	defaultServerAddr = "localhost:8011"
-
-	defaultDBPath   = "spellchecker.bin"
-	defaultAlphabet = spellchecker.DefaultAlphabet
 )
 
 func main() {
@@ -38,13 +36,13 @@ func main() {
 		logger.New(GitCommit, os.Getenv("LOG_LEVEL")),
 	)
 
-	sc, err := initSpellchecker()
+	registry, err := initRegistry(ctx)
 	if err != nil {
 		logger.FromContext(ctx).Error("init spellchecker error", "error", err)
 		os.Exit(1)
 	}
 
-	server := server.NewServer(ctx, sc)
+	server := server.NewServer(ctx, registry)
 
 	addr := defaultServerAddr
 	if a := os.Getenv("HTTP_ADDR"); a != "" {
@@ -85,25 +83,15 @@ func main() {
 	}
 }
 
-func initSpellchecker() (*spellchecker.Spellchecker, error) {
-	dbPath := defaultDBPath
-	if dbp := os.Getenv("SPELLCHECKER_DB_PATH"); dbp != "" {
-		dbPath = dbp
+func initRegistry(ctx context.Context) (*spellchecker.Registry, error) {
+	dir := os.Getenv("SPELLCHECKER_DIR")
+	if dir == "" {
+		return nil, fmt.Errorf("env SPELLCHECKER_DIR must be provided")
 	}
 
-	f, err := os.Open(dbPath)
-	if os.IsNotExist(err) {
-		alphabet := defaultAlphabet
-		if ab := os.Getenv("SPELLCHECKER_ALPHABET"); ab != "" {
-			alphabet = ab
-		}
-
-		return spellchecker.New(alphabet)
-	} else if err != nil {
-		return nil, err
+	if err := os.MkdirAll(dir, 0644); err != nil {
+		return nil, fmt.Errorf("unable to create dir %s: %w", dir, err)
 	}
 
-	defer f.Close()
-
-	return spellchecker.Load(f)
+	return spellchecker.NewRegistry(ctx, dir)
 }

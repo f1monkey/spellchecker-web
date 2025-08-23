@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	ErrAlreadyExists    = fmt.Errorf("already exists")
+	ErrAlreadyExists    = fmt.Errorf("dictionary already exists")
 	ErrSpellcheckerInit = fmt.Errorf("spellchecker init err")
+	ErrNotFound         = fmt.Errorf("dictionary not found")
 )
 
 const extension = ".dict"
@@ -51,6 +52,8 @@ func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
 		}
 
 		code, _ := strings.CutSuffix(f.Name(), extension)
+
+		logger.FromContext(ctx).Info("registry: loaded dictionary", "code", code)
 
 		items[code] = item
 	}
@@ -88,6 +91,20 @@ func (r *Registry) Get(code string) *spellchecker.Spellchecker {
 	defer r.mu.RUnlock()
 
 	return r.items[code].Spellchecker
+}
+
+func (r *Registry) Delete(code string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	_, ok := r.items[code]
+	if !ok {
+		return ErrNotFound
+	}
+
+	delete(r.items, code)
+
+	return nil
 }
 
 func findDictionaries(dir string) ([]fs.DirEntry, error) {
