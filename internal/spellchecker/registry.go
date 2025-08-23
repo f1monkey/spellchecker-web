@@ -1,8 +1,8 @@
 package spellchecker
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -25,32 +25,34 @@ type Registry struct {
 	mu sync.RWMutex
 
 	dir   string
-	items map[string]*spellchecker.Spellchecker
+	items map[string]RegistryItem
 }
 
 func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
-	files, err := listFiles(dir)
+	files, err := findDictionaries(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	items := make(map[string]*spellchecker.Spellchecker)
+	items := make(map[string]RegistryItem)
 
 	for _, f := range files {
 		buf, err := os.ReadFile(path.Join(dir, f.Name()))
 		if err != nil {
 			logger.FromContext(ctx).Error("registry: read file err", "file", f, "error", err)
+			continue
 		}
 
-		sc, err := spellchecker.Load(bytes.NewBuffer(buf))
-		if err != nil {
-			logger.FromContext(ctx).Error("registry: unable to initialize spellchecker", "file", f, "error", err)
+		var item RegistryItem
+
+		if err := json.Unmarshal(buf, &item); err != nil {
+			logger.FromContext(ctx).Error("registry: unable to initalize registry item", "file", f, "error", err)
 			continue
 		}
 
 		code, _ := strings.CutSuffix(f.Name(), extension)
 
-		items[code] = sc
+		items[code] = item
 	}
 
 	return &Registry{
@@ -58,7 +60,7 @@ func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
 	}, nil
 }
 
-func (r *Registry) Add(code string, alphabet string) (*spellchecker.Spellchecker, error) {
+func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -66,12 +68,17 @@ func (r *Registry) Add(code string, alphabet string) (*spellchecker.Spellchecker
 		return nil, ErrAlreadyExists
 	}
 
-	result, err := spellchecker.New(alphabet)
+	result, err := spellchecker.New(
+		options.Alphabet,
+		spellchecker.WithMaxErrors(int(options.MaxErrors)),
+	)
 	if err != nil {
 		return nil, ErrSpellcheckerInit
 	}
 
-	r.items[code] = result
+	r.items[code] = RegistryItem{
+		Spellchecker: result,
+	}
 
 	return result, nil
 }
@@ -80,10 +87,10 @@ func (r *Registry) Get(code string) *spellchecker.Spellchecker {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return r.items[code]
+	return r.items[code].Spellchecker
 }
 
-func listFiles(dir string) ([]fs.DirEntry, error) {
+func findDictionaries(dir string) ([]fs.DirEntry, error) {
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err

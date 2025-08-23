@@ -2,6 +2,7 @@ package spellchecker
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path"
 	"testing"
@@ -19,12 +20,14 @@ func Test_NewRegistry(t *testing.T) {
 		sc, err := spellchecker.New("abc")
 		require.NoError(t, err)
 
-		out1, err := os.Create(path.Join(dir, name+extension))
+		item := RegistryItem{
+			Spellchecker: sc,
+		}
+
+		data, err := json.Marshal(&item)
 		require.NoError(t, err)
 
-		defer out1.Close()
-
-		err = sc.Save(out1)
+		err = os.WriteFile(path.Join(dir, name+extension), data, 0755)
 		require.NoError(t, err)
 	}
 
@@ -82,9 +85,8 @@ func Test_NewRegistry(t *testing.T) {
 
 		createTestFile(t, dir, "code1")
 
-		f, err := os.Create(path.Join(dir, "code2"+extension))
+		err := os.WriteFile(path.Join(dir, "code2"+extension), []byte("qweqwe"), 0755)
 		require.NoError(t, err)
-		f.Close()
 
 		result, err := NewRegistry(context.Background(), dir)
 
@@ -103,9 +105,9 @@ func Test_Registry_Add(t *testing.T) {
 		r, err := NewRegistry(context.Background(), t.TempDir())
 		require.NoError(t, err)
 
-		r.items["code"] = &spellchecker.Spellchecker{}
+		r.items["code"] = RegistryItem{}
 
-		_, err = r.Add("code", "abc")
+		_, err = r.Add("code", Options{Alphabet: "abc"})
 
 		require.ErrorIs(t, err, ErrAlreadyExists)
 	})
@@ -116,7 +118,7 @@ func Test_Registry_Add(t *testing.T) {
 		r, err := NewRegistry(context.Background(), t.TempDir())
 		require.NoError(t, err)
 
-		_, err = r.Add("code", "aaa")
+		_, err = r.Add("code", Options{Alphabet: "aaa"})
 
 		require.ErrorIs(t, err, ErrSpellcheckerInit)
 	})
@@ -127,7 +129,7 @@ func Test_Registry_Add(t *testing.T) {
 		r, err := NewRegistry(context.Background(), t.TempDir())
 		require.NoError(t, err)
 
-		result, err := r.Add("code", "abc")
+		result, err := r.Add("code", Options{Alphabet: "abc"})
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
@@ -143,7 +145,7 @@ func Test_Registry_Get(t *testing.T) {
 		r, err := NewRegistry(context.Background(), t.TempDir())
 		require.NoError(t, err)
 
-		_, err = r.Add("code", "abc")
+		_, err = r.Add("code", Options{Alphabet: "abc"})
 		require.NoError(t, err)
 
 		require.NotNil(t, r.Get("code"))
