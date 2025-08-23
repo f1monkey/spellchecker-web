@@ -15,7 +15,7 @@ func Test_Registry_SetAlias(t *testing.T) {
 		require.NoError(t, err)
 
 		err = r.SetAlias("code2", "code")
-		require.ErrorIs(t, err, ErrNotFound)
+		require.ErrorIs(t, err, ErrAliasNotFound)
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -82,7 +82,7 @@ func Test_Registry_DeleteAlias(t *testing.T) {
 		require.NoError(t, err)
 
 		err = r.DeleteAlias("code")
-		require.ErrorIs(t, err, ErrNotFound)
+		require.ErrorIs(t, err, ErrAliasNotFound)
 	})
 
 	t.Run("success", func(t *testing.T) {

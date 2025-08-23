@@ -9,7 +9,7 @@ import (
 	"github.com/swaggest/rest/nethttp"
 )
 
-type EmptyResponse struct{}
+type Empty struct{}
 
 func Routes(registry *spellchecker.Registry, splitter *regexp.Regexp) func(r chi.Router) {
 	return func(r chi.Router) {
@@ -43,20 +43,24 @@ func dictionaryRoutes(registry *spellchecker.Registry, splitter *regexp.Regexp) 
 		r.Method(http.MethodPost, "/{code}/fix", nethttp.NewHandler(
 			dictionaryFix(registry, splitter),
 		))
-
-		r.Method(http.MethodPost, "/{code}/alias", nethttp.NewHandler(
-			aliasSet(registry),
-		))
 	}
 }
 
 func aliasRoutes(registry *spellchecker.Registry) func(r chi.Router) {
 	return func(r chi.Router) {
-		r.Method(http.MethodPut, "/alias/{alias}", nethttp.NewHandler(
+		r.Method(http.MethodGet, "/", nethttp.NewHandler(
+			aliasList(registry),
+		))
+
+		r.Method(http.MethodGet, "/{alias}", nethttp.NewHandler(
+			aliasGet(registry),
+		))
+
+		r.Method(http.MethodPut, "/{alias}", nethttp.NewHandler(
 			aliasSet(registry),
 		))
 
-		r.Method(http.MethodDelete, "/alias/{alias}", nethttp.NewHandler(
+		r.Method(http.MethodDelete, "/{alias}", nethttp.NewHandler(
 			aliasDelete(registry),
 		))
 	}

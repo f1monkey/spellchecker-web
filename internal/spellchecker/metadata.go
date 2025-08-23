@@ -1,8 +1,15 @@
 package spellchecker
 
-import "slices"
+import (
+	"fmt"
+	"slices"
+)
 
 const metadataFile = "metadata"
+
+var (
+	ErrAliasNotFound = fmt.Errorf("alias not found")
+)
 
 type Metadata struct {
 	Aliases         map[string]string   `json:"aliases"`         // alias => dict
@@ -16,20 +23,20 @@ func newMetadata() Metadata {
 	}
 }
 
-func (r *Registry) DeleteAlias(alias string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (r *Registry) ListAliases() []ListItem {
+	return r.List()
+}
 
-	err := r.doDeleteAlias(alias)
-	if err != nil {
-		return err
+func (r *Registry) GetCodeByAlias(alias string) (string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	v, ok := r.metadata.Aliases[alias]
+	if !ok {
+		return "", ErrAliasNotFound
 	}
 
-	if err := r.doSaveMetadata(); err != nil {
-		return err
-	}
-
-	return nil
+	return v, nil
 }
 
 func (r *Registry) SetAlias(alias string, to string) error {
@@ -38,7 +45,7 @@ func (r *Registry) SetAlias(alias string, to string) error {
 
 	_, ok := r.items[to]
 	if !ok {
-		return ErrNotFound
+		return ErrAliasNotFound
 	}
 
 	existing, ok := r.metadata.Aliases[alias]
@@ -60,10 +67,26 @@ func (r *Registry) SetAlias(alias string, to string) error {
 	return nil
 }
 
+func (r *Registry) DeleteAlias(alias string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	err := r.doDeleteAlias(alias)
+	if err != nil {
+		return err
+	}
+
+	if err := r.doSaveMetadata(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *Registry) doDeleteAlias(alias string) error {
 	existing, ok := r.metadata.Aliases[alias]
 	if !ok {
-		return ErrNotFound
+		return ErrAliasNotFound
 	}
 
 	delete(r.metadata.Aliases, alias)

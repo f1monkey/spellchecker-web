@@ -9,8 +9,6 @@ import (
 	"github.com/swaggest/usecase/status"
 )
 
-type DictionaryListRequest struct{}
-
 type DictionaryListResponse struct {
 	Items []ListItem `json:"items"`
 }
@@ -21,7 +19,7 @@ type ListItem struct {
 }
 
 func dictionaryList(registry *spellchecker.Registry) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryListRequest, output *DictionaryListResponse) error {
+	u := usecase.NewInteractor(func(ctx context.Context, input Empty, output *DictionaryListResponse) error {
 		items := registry.List()
 
 		result := make([]ListItem, 0, len(items))
@@ -53,7 +51,7 @@ type DictionaryCreateRequest struct {
 }
 
 func dictionaryCreate(registry *spellchecker.Registry) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryCreateRequest, output *EmptyResponse) error {
+	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryCreateRequest, output *Empty) error {
 		_, err := registry.Add(input.Code, spellchecker.Options{
 			Alphabet:  input.Alphabet,
 			MaxErrors: input.MaxErrors,
@@ -79,7 +77,7 @@ type DictionaryDeleteRequest struct {
 }
 
 func dictionaryDelete(registry *spellchecker.Registry) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryDeleteRequest, output *EmptyResponse) error {
+	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryDeleteRequest, output *Empty) error {
 		err := registry.Delete(input.Code)
 		if errors.Is(spellchecker.ErrNotFound, err) {
 			return status.Wrap(err, status.NotFound)
@@ -102,7 +100,7 @@ type DictionarySaveRequest struct {
 }
 
 func dictionarySave(registry *spellchecker.Registry) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, input DictionarySaveRequest, output *EmptyResponse) error {
+	u := usecase.NewInteractor(func(ctx context.Context, input DictionarySaveRequest, output *Empty) error {
 		err := registry.Save(input.Code)
 		if errors.Is(spellchecker.ErrNotFound, err) {
 			return status.Wrap(err, status.NotFound)
