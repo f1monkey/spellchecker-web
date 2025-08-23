@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/logger"
@@ -64,6 +65,28 @@ func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
 	}, nil
 }
 
+func (r *Registry) AutoSave(ctx context.Context, interval time.Duration) {
+	if interval <= 0 {
+		return
+	}
+
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if err := r.SaveAll(ctx); err != nil {
+					logger.FromContext(ctx).Error("registry: save all error", "error", err)
+				}
+			}
+		}
+	}()
+}
+
 func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -113,10 +136,29 @@ func (r *Registry) Delete(code string) error {
 	return nil
 }
 
+func (r *Registry) SaveAll(ctx context.Context) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for code := range r.items {
+		if err := r.doSave(code); err != nil {
+			return err
+		}
+
+		logger.FromContext(ctx).Info("registry: dictionary saved", "dictionary", code)
+	}
+
+	return nil
+}
+
 func (r *Registry) Save(code string) error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	return r.doSave(code)
+}
+
+func (r *Registry) doSave(code string) error {
 	item, ok := r.items[code]
 	if !ok {
 		return ErrNotFound

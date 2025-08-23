@@ -42,6 +42,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	defer registry.SaveAll(ctx)
+
 	server := server.NewServer(ctx, registry)
 
 	addr := defaultServerAddr
@@ -93,5 +95,24 @@ func initRegistry(ctx context.Context) (*spellchecker.Registry, error) {
 		return nil, fmt.Errorf("unable to create dir %s: %w", dir, err)
 	}
 
-	return spellchecker.NewRegistry(ctx, dir)
+	var saveInterval time.Duration
+
+	saveIntervalStr := os.Getenv("SPELLCHECKER_AUTOSAVE_INTERVAL")
+	if saveIntervalStr != "" {
+		i, err := time.ParseDuration(saveIntervalStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid SPELLCHECKER_AUTOSAVE_INTERVAL: %w", err)
+		}
+
+		saveInterval = i
+	}
+
+	result, err := spellchecker.NewRegistry(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+
+	result.AutoSave(ctx, saveInterval)
+
+	return result, nil
 }
