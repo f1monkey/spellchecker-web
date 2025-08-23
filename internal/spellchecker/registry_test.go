@@ -38,13 +38,16 @@ func Test_NewRegistry(t *testing.T) {
 		require.Contains(t, result.items, "code")
 	})
 
-	t.Run("two files, ok", func(t *testing.T) {
+	t.Run("two files, has metadata", func(t *testing.T) {
 		t.Parallel()
 
 		dir := t.TempDir()
 
 		createTestFile(t, dir, "code1")
 		createTestFile(t, dir, "code2")
+
+		err := os.WriteFile(path.Join(dir, metadataFile), []byte(`{}`), 0644)
+		require.NoError(t, err)
 
 		result, err := NewRegistry(context.Background(), dir)
 
@@ -147,6 +150,26 @@ func Test_Registry_Get(t *testing.T) {
 		require.NotNil(t, v)
 	})
 
+	t.Run("by alias", func(t *testing.T) {
+		t.Parallel()
+
+		r, err := NewRegistry(context.Background(), t.TempDir())
+		require.NoError(t, err)
+
+		_, err = r.Add("code", Options{Alphabet: "abc"})
+		require.NoError(t, err)
+
+		r.SetAlias("code2", "code")
+
+		v, err := r.Get("code2")
+		require.NoError(t, err)
+		require.NotNil(t, v)
+
+		v, err = r.Get("code")
+		require.NoError(t, err)
+		require.NotNil(t, v)
+	})
+
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
@@ -214,44 +237,6 @@ func Test_Registry_Delete(t *testing.T) {
 		require.NoFileExists(t, path.Join(dir, fileName(code)))
 
 		require.NotContains(t, r.items, code)
-	})
-}
-
-func Test_Registry_Save(t *testing.T) {
-	t.Parallel()
-
-	t.Run("not found", func(t *testing.T) {
-		t.Parallel()
-
-		r, err := NewRegistry(context.Background(), t.TempDir())
-		require.NoError(t, err)
-
-		_, err = r.Add("code", Options{Alphabet: "abc"})
-		require.NoError(t, err)
-
-		err = r.Save("qwerty")
-		require.ErrorIs(t, err, ErrNotFound)
-	})
-
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-
-		dir := t.TempDir()
-		code := "code"
-
-		r, err := NewRegistry(context.Background(), dir)
-		require.NoError(t, err)
-
-		_, err = r.Add(code, Options{Alphabet: "abc"})
-		require.NoError(t, err)
-
-		err = r.Save(code)
-		require.NoError(t, err)
-		require.FileExists(t, path.Join(dir, fileName(code)))
-
-		r2, err := NewRegistry(context.Background(), dir)
-		require.NoError(t, err)
-		require.Contains(t, r2.items, code)
 	})
 }
 

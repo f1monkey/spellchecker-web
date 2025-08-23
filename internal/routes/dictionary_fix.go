@@ -97,7 +97,7 @@ func dictionaryFix(registry *spellchecker.Registry, splitter *regexp.Regexp) use
 
 	u.SetTitle("Fix text")
 	u.SetDescription("Performs spellchecking on the given input text. Returns misspelled words along with suggested corrections, up to the specified limit per word.")
-	u.SetExpectedErrors(status.Internal)
+	u.SetExpectedErrors(status.Internal, status.NotFound)
 
 	return u
 }

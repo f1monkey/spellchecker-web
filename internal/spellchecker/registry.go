@@ -2,14 +2,12 @@ package spellchecker
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
 	"path"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/logger"
@@ -26,8 +24,9 @@ const extension = ".dict"
 type Registry struct {
 	mu sync.RWMutex
 
-	dir   string
-	items map[string]RegistryItem
+	metadata Metadata
+	dir      string
+	items    map[string]RegistryItem
 }
 
 func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
@@ -40,6 +39,13 @@ func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
 		dir:   dir,
 		items: make(map[string]RegistryItem),
 	}
+
+	metadata, err := result.doLoadMetadata()
+	if err != nil {
+		return nil, err
+	}
+
+	result.metadata = metadata
 
 	for _, f := range files {
 		code, _ := strings.CutSuffix(f.Name(), extension)
@@ -56,28 +62,6 @@ func NewRegistry(ctx context.Context, dir string) (*Registry, error) {
 	}
 
 	return result, nil
-}
-
-func (r *Registry) AutoSave(ctx context.Context, interval time.Duration) {
-	if interval <= 0 {
-		return
-	}
-
-	go func() {
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				if err := r.SaveAll(ctx); err != nil {
-					logger.FromContext(ctx).Error("registry: save all error", "error", err)
-				}
-			}
-		}
-	}()
 }
 
 func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker, error) {
@@ -109,7 +93,12 @@ func (r *Registry) Get(code string) (*spellchecker.Spellchecker, error) {
 
 	v, ok := r.items[code]
 	if !ok {
-		return nil, ErrNotFound
+		aliased, ok := r.metadata.Aliases[code]
+		if !ok {
+			return nil, ErrNotFound
+		}
+
+		v = r.items[aliased]
 	}
 
 	return v.Spellchecker, nil
@@ -132,62 +121,6 @@ func (r *Registry) Delete(code string) error {
 	delete(r.items, code)
 
 	return nil
-}
-
-func (r *Registry) SaveAll(ctx context.Context) error {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	for code := range r.items {
-		if err := r.doSave(code); err != nil {
-			return err
-		}
-
-		logger.FromContext(ctx).Info("registry: dictionary saved", "dictionary", code)
-	}
-
-	return nil
-}
-
-func (r *Registry) Save(code string) error {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	return r.doSave(code)
-}
-
-func (r *Registry) doSave(code string) error {
-	item, ok := r.items[code]
-	if !ok {
-		return ErrNotFound
-	}
-
-	data, err := json.Marshal(&item)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(path.Join(r.dir, fileName(code)), data, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *Registry) doLoad(code string) (RegistryItem, error) {
-	buf, err := os.ReadFile(fullPath(r.dir, code))
-	if err != nil {
-		return RegistryItem{}, err
-	}
-
-	var item RegistryItem
-
-	if err := json.Unmarshal(buf, &item); err != nil {
-		return RegistryItem{}, err
-	}
-
-	return item, nil
 }
 
 func findDictionaries(dir string) ([]fs.DirEntry, error) {
