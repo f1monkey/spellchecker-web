@@ -8,7 +8,6 @@ import (
 )
 
 func Test_Registry_SetAlias(t *testing.T) {
-
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
@@ -72,5 +71,35 @@ func Test_Registry_SetAlias(t *testing.T) {
 		require.Contains(t, r.metadata.Aliases, "alias")
 		require.NotContains(t, r.metadata.InvertedAliases["code1"], "alias")
 		require.Contains(t, r.metadata.InvertedAliases["code2"], "alias")
+	})
+}
+
+func Test_Registry_DeleteAlias(t *testing.T) {
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		r, err := NewRegistry(context.Background(), t.TempDir())
+		require.NoError(t, err)
+
+		err = r.DeleteAlias("code")
+		require.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		r, err := NewRegistry(context.Background(), t.TempDir())
+		require.NoError(t, err)
+
+		_, err = r.Add("code", Options{Alphabet: "abc"})
+		require.NoError(t, err)
+
+		err = r.SetAlias("alias", "code")
+		require.NoError(t, err)
+
+		err = r.DeleteAlias("alias")
+		require.NoError(t, err)
+		require.NotContains(t, r.metadata.Aliases, "alias")
+		require.NotContains(t, r.metadata.InvertedAliases["code"], "alias")
 	})
 }

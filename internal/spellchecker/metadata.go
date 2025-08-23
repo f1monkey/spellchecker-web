@@ -16,6 +16,22 @@ func newMetadata() Metadata {
 	}
 }
 
+func (r *Registry) DeleteAlias(alias string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	err := r.doDeleteAlias(alias)
+	if err != nil {
+		return err
+	}
+
+	if err := r.doSaveMetadata(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *Registry) SetAlias(alias string, to string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -31,13 +47,7 @@ func (r *Registry) SetAlias(alias string, to string) error {
 			return nil
 		}
 
-		for i, a := range r.metadata.InvertedAliases[existing] {
-			if a != alias {
-				continue
-			}
-
-			r.metadata.InvertedAliases[existing] = slices.Delete(r.metadata.InvertedAliases[existing], i, i+1)
-		}
+		_ = r.doDeleteAlias(alias)
 	}
 
 	r.metadata.Aliases[alias] = to
@@ -45,6 +55,29 @@ func (r *Registry) SetAlias(alias string, to string) error {
 
 	if err := r.doSaveMetadata(); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *Registry) doDeleteAlias(alias string) error {
+	existing, ok := r.metadata.Aliases[alias]
+	if !ok {
+		return ErrNotFound
+	}
+
+	delete(r.metadata.Aliases, alias)
+
+	for i, a := range r.metadata.InvertedAliases[existing] {
+		if a != alias {
+			continue
+		}
+
+		r.metadata.InvertedAliases[existing] = slices.Delete(r.metadata.InvertedAliases[existing], i, i+1)
+
+		if len(r.metadata.InvertedAliases[existing]) == 0 {
+			delete(r.metadata.InvertedAliases, existing)
+		}
 	}
 
 	return nil

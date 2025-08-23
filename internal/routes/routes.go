@@ -14,6 +14,7 @@ type EmptyResponse struct{}
 func Routes(registry *spellchecker.Registry, splitter *regexp.Regexp) func(r chi.Router) {
 	return func(r chi.Router) {
 		r.Route("/dictionaries", dictionaryRoutes(registry, splitter))
+		r.Route("/aliases", aliasRoutes(registry))
 	}
 }
 
@@ -44,7 +45,19 @@ func dictionaryRoutes(registry *spellchecker.Registry, splitter *regexp.Regexp) 
 		))
 
 		r.Method(http.MethodPost, "/{code}/alias", nethttp.NewHandler(
-			dictionaryAlias(registry),
+			aliasSet(registry),
+		))
+	}
+}
+
+func aliasRoutes(registry *spellchecker.Registry) func(r chi.Router) {
+	return func(r chi.Router) {
+		r.Method(http.MethodPut, "/alias/{alias}", nethttp.NewHandler(
+			aliasSet(registry),
+		))
+
+		r.Method(http.MethodDelete, "/alias/{alias}", nethttp.NewHandler(
+			aliasDelete(registry),
 		))
 	}
 }
