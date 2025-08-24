@@ -82,6 +82,7 @@ func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker
 
 	r.items[code] = RegistryItem{
 		Spellchecker: result,
+		Options:      options,
 	}
 
 	return result, nil
