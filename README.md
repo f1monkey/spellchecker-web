@@ -72,7 +72,7 @@ Response:
             "suggestions": [
                 {
                     "text": "weapon",
-                    "score": 2.7081884344831684
+                    "score": 0.8239592165010822
                 }
             ],
             "error": "invalid_word"
@@ -83,7 +83,7 @@ Response:
             "suggestions": [
                 {
                     "text": "before",
-                    "score": 2.339371734389815
+                    "score": 0.7797905781299383
                 }
             ],
             "error": "invalid_word"
@@ -94,10 +94,36 @@ Response:
             "suggestions": [
                 {
                     "text": "battle",
-                    "score": 2.339371734389815
+                    "score": 0.7797905781299383
                 }
             ],
             "error": "invalid_word"
+        }
+    ],
+    "correct": [
+        {
+            "start": 0,
+            "end": 3
+        },
+        {
+            "start": 4,
+            "end": 10
+        },
+        {
+            "start": 11,
+            "end": 17
+        },
+        {
+            "start": 18,
+            "end": 21
+        },
+        {
+            "start": 35,
+            "end": 43
+        },
+        {
+            "start": 44,
+            "end": 48
         }
     ]
 }

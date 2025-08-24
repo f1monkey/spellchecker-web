@@ -37,19 +37,21 @@ func Test_DictionaryFix(t *testing.T) {
 	sc.Add("hello")
 
 	tests := []struct {
-		name      string
-		getter    dictionaryGetter
-		input     DictionaryFixRequest
-		wantErr   bool
-		wantCode  status.Code
-		wantFixes []Fix
+		name        string
+		getter      dictionaryGetter
+		input       DictionaryFixRequest
+		wantErr     bool
+		wantCode    status.Code
+		wantFixes   []Fix
+		wantCorrect []Correct
 	}{
 		{
-			name:      "empty text",
-			getter:    &testDictionaryGetter{sc: &f1mspellchecker.Spellchecker{}},
-			input:     DictionaryFixRequest{Code: "en", Text: "", Limit: 5},
-			wantErr:   false,
-			wantFixes: []Fix{},
+			name:        "empty text",
+			getter:      &testDictionaryGetter{sc: &f1mspellchecker.Spellchecker{}},
+			input:       DictionaryFixRequest{Code: "en", Text: "", Limit: 5},
+			wantErr:     false,
+			wantFixes:   []Fix{},
+			wantCorrect: []Correct{},
 		},
 		{
 			name: "exact match word",
@@ -59,6 +61,9 @@ func Test_DictionaryFix(t *testing.T) {
 			input:     DictionaryFixRequest{Code: "en", Text: "hello", Limit: 5},
 			wantErr:   false,
 			wantFixes: []Fix{},
+			wantCorrect: []Correct{
+				{Start: 0, End: 5},
+			},
 		},
 		{
 			name: "word with suggestions",
@@ -76,6 +81,7 @@ func Test_DictionaryFix(t *testing.T) {
 					},
 				},
 			},
+			wantCorrect: []Correct{},
 		},
 		{
 			name: "word without suggestions",
@@ -90,6 +96,7 @@ func Test_DictionaryFix(t *testing.T) {
 					Error: "unknown_word",
 				},
 			},
+			wantCorrect: []Correct{},
 		},
 		{
 			name:     "dictionary not found",
@@ -135,6 +142,13 @@ func Test_DictionaryFix(t *testing.T) {
 					assert.Equal(t, f.Start, out.Fixes[i].Start)
 					assert.Equal(t, f.End, out.Fixes[i].End)
 					assert.Equal(t, f.Error, out.Fixes[i].Error)
+				}
+
+				require.Len(t, out.Correct, len(tt.wantCorrect))
+
+				for i, f := range tt.wantCorrect {
+					assert.Equal(t, f.Start, out.Correct[i].Start)
+					assert.Equal(t, f.End, out.Correct[i].End)
 				}
 			}
 		})

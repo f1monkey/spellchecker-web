@@ -24,7 +24,8 @@ type DictionaryFixRequest struct {
 }
 
 type DictionaryFixResponse struct {
-	Fixes []Fix `json:"fixes" description:"List of detected issues."`
+	Fixes   []Fix     `json:"fixes" description:"List of detected issues."`
+	Correct []Correct `json:"correct" description:"List of correct words."`
 }
 
 type Fix struct {
@@ -32,6 +33,11 @@ type Fix struct {
 	End         int                      `json:"end" description:"Ending character index."`
 	Suggestions []SpellcheckerSuggestion `json:"suggestions,omitempty" description:"List of correction suggestions."`
 	Error       string                   `json:"error" enum:"unknown_word,invalid_word" description:"Type of detected error. unknown_word - no possible corrections found; invalid_word - the word can be corrected using one of the provided suggestions"`
+}
+
+type Correct struct {
+	Start int `json:"start" description:"Starting character index of the word in the input."`
+	End   int `json:"end" description:"Ending character index."`
 }
 
 type SpellcheckerSuggestion struct {
@@ -60,6 +66,7 @@ func dictionaryFix(registry dictionaryGetter, splitter *regexp.Regexp) usecase.I
 
 		matches := splitter.FindAllStringIndex(input.Text, -1)
 		fixes := make([]Fix, 0, len(matches))
+		correct := make([]Correct, 0, len(matches))
 
 		for _, match := range matches {
 			startByte, endByte := match[0], match[1]
@@ -76,6 +83,11 @@ func dictionaryFix(registry dictionaryGetter, splitter *regexp.Regexp) usecase.I
 			suggestions := sc.SuggestScore(word, input.Limit)
 
 			if suggestions.ExactMatch {
+				correct = append(correct, Correct{
+					Start: startRune,
+					End:   endRune,
+				})
+
 				continue
 			}
 
@@ -97,6 +109,7 @@ func dictionaryFix(registry dictionaryGetter, splitter *regexp.Regexp) usecase.I
 		}
 
 		output.Fixes = fixes
+		output.Correct = correct
 
 		return nil
 	})
