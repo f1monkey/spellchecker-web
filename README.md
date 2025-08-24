@@ -20,6 +20,8 @@ The OpenAPI (Swagger) documentation is available at /docs.
 
 ## Usage Example
 
+__Notes__: The alphabet is case sensitive, as are phrases, so you'll need to convert them to lowercase or add the letters A-Z to the alphabet to make the spellchecker work with capitals.
+
 1) Create a dictionary `my-dictionary`:
 
 ```
