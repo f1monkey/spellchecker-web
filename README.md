@@ -53,7 +53,7 @@ Content-Type: application/json
 
 3) Fix phrase
 ```
-POST /v1/dictionaries/my-dictionary/phrase
+POST /v1/dictionaries/my-dictionary/fix
 Content-Type: application/json
 
 {
