@@ -125,10 +125,13 @@ func Test_Registry_Add(t *testing.T) {
 		r, err := NewRegistry(context.Background(), t.TempDir())
 		require.NoError(t, err)
 
-		result, err := r.Add("code", Options{Alphabet: "abc"})
+		opts := Options{Alphabet: "abc"}
+
+		result, err := r.Add("code", opts)
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
+		require.Equal(t, opts, r.items["code"].Options)
 	})
 }
 
