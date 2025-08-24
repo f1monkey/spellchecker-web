@@ -70,12 +70,26 @@ func (r *Registry) doSave(code string) error {
 		return err
 	}
 
-	err = os.WriteFile(path.Join(r.dir, fileName(code)), data, 0644)
+	dstPath := path.Join(r.dir, fileName(code))
+
+	tmpFile, err := os.CreateTemp(r.dir, fileName(code)+".tmp-*")
 	if err != nil {
 		return err
 	}
+	tmpName := tmpFile.Name()
 
-	return nil
+	if _, err := tmpFile.Write(data); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpName)
+		return err
+	}
+
+	if err := tmpFile.Close(); err != nil {
+		os.Remove(tmpName)
+		return err
+	}
+
+	return os.Rename(tmpName, dstPath)
 }
 
 func (r *Registry) doLoad(code string) (RegistryItem, error) {
@@ -112,5 +126,24 @@ func (r *Registry) doSaveMetadata() error {
 		return err
 	}
 
-	return os.WriteFile(path.Join(r.dir, metadataFile), data, 0644)
+	dstPath := path.Join(r.dir, metadataFile)
+
+	tmpFile, err := os.CreateTemp(r.dir, metadataFile+".tmp-*")
+	if err != nil {
+		return err
+	}
+	tmpName := tmpFile.Name()
+
+	if _, err := tmpFile.Write(data); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpName)
+		return err
+	}
+
+	if err := tmpFile.Close(); err != nil {
+		os.Remove(tmpName)
+		return err
+	}
+
+	return os.Rename(tmpName, dstPath)
 }
