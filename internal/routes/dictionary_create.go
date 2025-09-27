@@ -29,6 +29,7 @@ func dictionaryCreate(registry registryAdder) usecase.Interactor {
 			MaxErrors:           input.MaxErrors,
 			SimilarityThreshold: input.SimilarityThreshold,
 		})
+
 		if errors.Is(spellchecker.ErrAlreadyExists, err) {
 			return status.Wrap(err, status.AlreadyExists)
 		} else if err != nil {

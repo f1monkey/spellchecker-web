@@ -86,10 +86,20 @@ func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker
 		return nil, ErrSpellcheckerInit
 	}
 
-	r.items[code] = RegistryItem{
+	item := RegistryItem{
 		Spellchecker: result,
 		Options:      options,
 	}
+
+	if err := r.doSaveItem(code, item); err != nil {
+		return nil, fmt.Errorf("dictionary %q save: %w", code, err)
+	}
+
+	if err := r.doSaveMetadata(); err != nil {
+		return nil, fmt.Errorf("metadata save: %w", err)
+	}
+
+	r.items[code] = item
 
 	return result, nil
 }
