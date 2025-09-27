@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"unicode/utf8"
 
-	f1mspellchecker "github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
+	f1mspellchecker "github.com/f1monkey/spellchecker/v2"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 )
@@ -19,8 +19,10 @@ type dictionaryGetter interface {
 type DictionaryFixRequest struct {
 	Code string `path:"code" minLength:"1"`
 
-	Text  string `json:"text" description:"Phrase to be checked"`
-	Limit int    `json:"limit" default:"5" desciption:"Max suggestions per word"`
+	Text                string  `json:"text" description:"Phrase to be checked"`
+	Limit               int     `json:"limit" default:"5" desciption:"Max suggestions per word"`
+	MaxErrors           int     `json:"maxErrors" default:"2" desciption:"Max spellchecker errors allowed"`
+	SimilarityThreshold float64 `json:"similarityThreshold" minimum:"0" maximum:"1" desciption:"Word similarity percent required"`
 }
 
 type DictionaryFixResponse struct {
@@ -51,71 +53,78 @@ func dictionaryFix(registry dictionaryGetter, splitter *regexp.Regexp) usecase.I
 		errorInvalidWord = "invalid_word"
 	)
 
-	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryFixRequest, output *DictionaryFixResponse) error {
-		sc, err := registry.Get(input.Code)
-		if errors.Is(spellchecker.ErrNotFound, err) {
-			return status.Wrap(err, status.NotFound)
-		} else if err != nil {
-			return status.Wrap(err, status.Internal)
-		}
-
-		if input.Text == "" {
-			output.Fixes = make([]Fix, 0)
-			return nil
-		}
-
-		matches := splitter.FindAllStringIndex(input.Text, -1)
-		fixes := make([]Fix, 0, len(matches))
-		correct := make([]Correct, 0, len(matches))
-
-		for _, match := range matches {
-			startByte, endByte := match[0], match[1]
-			startRune := utf8.RuneCountInString(input.Text[:startByte])
-			endRune := startRune + utf8.RuneCountInString(input.Text[startByte:endByte])
-
-			fix := Fix{
-				Start: startRune,
-				End:   endRune,
+	u := usecase.NewInteractor(
+		func(ctx context.Context, input DictionaryFixRequest, output *DictionaryFixResponse) error {
+			sc, err := registry.Get(input.Code)
+			if errors.Is(spellchecker.ErrNotFound, err) {
+				return status.Wrap(err, status.NotFound)
+			} else if err != nil {
+				return status.Wrap(err, status.Internal)
 			}
 
-			word := input.Text[startByte:endByte]
+			if input.Text == "" {
+				output.Fixes = make([]Fix, 0)
+				return nil
+			}
 
-			suggestions := sc.SuggestScore(word, input.Limit)
+			matches := splitter.FindAllStringIndex(input.Text, -1)
+			fixes := make([]Fix, 0, len(matches))
+			correct := make([]Correct, 0, len(matches))
 
-			if suggestions.ExactMatch {
-				correct = append(correct, Correct{
+			for _, match := range matches {
+				startByte, endByte := match[0], match[1]
+				startRune := utf8.RuneCountInString(input.Text[:startByte])
+				endRune := startRune + utf8.RuneCountInString(input.Text[startByte:endByte])
+
+				fix := Fix{
 					Start: startRune,
 					End:   endRune,
-				})
-
-				continue
-			}
-
-			if len(suggestions.Suggestions) == 0 {
-				fix.Error = errorUnknownWord
-			} else {
-				fix.Error = errorInvalidWord
-				fix.Suggestions = make([]SpellcheckerSuggestion, 0, len(suggestions.Suggestions))
-
-				for _, s := range suggestions.Suggestions {
-					fix.Suggestions = append(fix.Suggestions, SpellcheckerSuggestion{
-						Text:  s.Value,
-						Score: s.Score,
-					})
 				}
+
+				word := input.Text[startByte:endByte]
+
+				suggestions := sc.Suggest(&f1mspellchecker.SearchOptions{
+					MaxErrors:  input.MaxErrors,
+					FilterFunc: spellchecker.ScoringFunc(input.MaxErrors, input.SimilarityThreshold),
+				}, word, input.Limit)
+
+				if suggestions.ExactMatch {
+					correct = append(correct, Correct{
+						Start: startRune,
+						End:   endRune,
+					})
+
+					continue
+				}
+
+				if len(suggestions.Suggestions) == 0 {
+					fix.Error = errorUnknownWord
+				} else {
+					fix.Error = errorInvalidWord
+					fix.Suggestions = make([]SpellcheckerSuggestion, 0, len(suggestions.Suggestions))
+
+					for _, s := range suggestions.Suggestions {
+						fix.Suggestions = append(fix.Suggestions, SpellcheckerSuggestion{
+							Text:  s.Value,
+							Score: s.Score,
+						})
+					}
+				}
+
+				fixes = append(fixes, fix)
 			}
 
-			fixes = append(fixes, fix)
-		}
+			output.Fixes = fixes
+			output.Correct = correct
 
-		output.Fixes = fixes
-		output.Correct = correct
-
-		return nil
-	})
+			return nil
+		},
+	)
 
 	u.SetTitle("Fix text")
-	u.SetDescription("Performs spellchecking on the given input text. Returns misspelled words along with suggested corrections, up to the specified limit per word.")
+	u.SetDescription(
+		"Performs spellchecking on the given input text. Returns misspelled words along with suggested corrections, up to the specified limit per word.",
+	)
 	u.SetExpectedErrors(status.Internal, status.NotFound)
 
 	return u

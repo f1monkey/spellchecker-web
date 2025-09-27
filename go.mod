@@ -3,7 +3,8 @@ module github.com/f1monkey/spellchecker-web
 go 1.24
 
 require (
-	github.com/f1monkey/spellchecker v1.3.0
+	github.com/agext/levenshtein v1.2.3
+	github.com/f1monkey/spellchecker/v2 v2.0.1
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/stretchr/testify v1.8.4
 	github.com/swaggest/openapi-go v0.2.59
@@ -13,7 +14,6 @@ require (
 )
 
 require (
-	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/f1monkey/bitmap v1.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

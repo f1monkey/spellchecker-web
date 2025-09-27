@@ -12,8 +12,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/f1monkey/bitmap v1.4.0 h1:Is1PqZWrTawUowD/qE7Vnlh9fzXrEs/qxJHDQ47jZ3g=
 github.com/f1monkey/bitmap v1.4.0/go.mod h1:qOc9q5FQxdvMyjVDnmvfJxUtz8JIryqOGxpg4Vtg4nY=
-github.com/f1monkey/spellchecker v1.3.0 h1:3Y5mkLlYKUmQ7VFMJxuRc03/fVLyhtoqRiaT1C7R/l0=
-github.com/f1monkey/spellchecker v1.3.0/go.mod h1:62+fPnP8bII5+2alSPc1pA0XrH7vA0tyIFhAs6E0dN8=
+github.com/f1monkey/spellchecker/v2 v2.0.1 h1:bUJmlmgn/75koynPY4yIRXHC27kHDUb83fZkQpauho4=
+github.com/f1monkey/spellchecker/v2 v2.0.1/go.mod h1:fuw+e0Ibat071gwjzQBjVSrQ3+5uq3v2Ovqy5engZ+k=
 github.com/go-chi/chi/v5 v5.2.2 h1:CMwsvRVTbXVytCk1Wd72Zy1LAsAh9GxMmSNWLHCG618=
 github.com/go-chi/chi/v5 v5.2.2/go.mod h1:L2yAIGWB3H+phAw1NxKwWM+7eUH/lU8pOMm5hHcoops=
 github.com/iancoleman/orderedmap v0.3.0 h1:5cbR2grmZR/DiVt+VJopEhtVs9YGInGIxAoMJn+Ichc=

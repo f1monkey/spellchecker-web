@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	f1mspellchecker "github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
+	f1mspellchecker "github.com/f1monkey/spellchecker/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/usecase/status"
 )

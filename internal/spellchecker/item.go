@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/f1monkey/spellchecker"
+	"github.com/f1monkey/spellchecker/v2"
 )
 
 type RegistryItem struct {
@@ -14,9 +14,7 @@ type RegistryItem struct {
 }
 
 type Options struct {
-	Alphabet            string  `json:"alphabet"`
-	MaxErrors           uint    `json:"maxErrors"`
-	SimilarityThreshold float64 `json:"similarityThreshold"`
+	Alphabet string `json:"alphabet"`
 }
 
 type src struct {
@@ -51,15 +49,6 @@ func (r *RegistryItem) UnmarshalJSON(data []byte) error {
 
 	sc, err := spellchecker.Load(bytes.NewReader(value.Spellchecker))
 	if err != nil {
-		return err
-	}
-
-	if err := sc.WithOpts(spellchecker.WithFilterFunc(
-		ScoringFunc(
-			int(value.Options.MaxErrors),
-			value.Options.SimilarityThreshold,
-		),
-	)); err != nil {
 		return err
 	}
 

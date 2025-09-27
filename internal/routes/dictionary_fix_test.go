@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"testing"
 
-	f1mspellchecker "github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
+	f1mspellchecker "github.com/f1monkey/spellchecker/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/usecase/status"
@@ -34,7 +34,7 @@ func Test_DictionaryFix(t *testing.T) {
 	sc, err := f1mspellchecker.New(f1mspellchecker.DefaultAlphabet)
 	require.NoError(t, err)
 
-	sc.Add("hello")
+	sc.Add(nil, "hello")
 
 	tests := []struct {
 		name        string

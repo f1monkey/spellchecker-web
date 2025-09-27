@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/logger"
+	"github.com/f1monkey/spellchecker/v2"
 )
 
 var (
@@ -72,16 +72,7 @@ func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker
 		return nil, ErrAlreadyExists
 	}
 
-	result, err := spellchecker.New(
-		options.Alphabet,
-		spellchecker.WithMaxErrors(int(options.MaxErrors)),
-		spellchecker.WithFilterFunc(
-			ScoringFunc(
-				int(options.MaxErrors),
-				options.SimilarityThreshold,
-			),
-		),
-	)
+	result, err := spellchecker.New(options.Alphabet)
 	if err != nil {
 		return nil, ErrSpellcheckerInit
 	}

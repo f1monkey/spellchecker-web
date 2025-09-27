@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/agext/levenshtein"
-	"github.com/f1monkey/spellchecker"
+	"github.com/f1monkey/spellchecker/v2"
 )
 
 func ScoringFunc(maxErrors int, similarityThreshold float64) spellchecker.FilterFunc {

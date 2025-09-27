@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	f1mspellchecker "github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
+	f1mspellchecker "github.com/f1monkey/spellchecker/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/swaggest/usecase/status"
 )
@@ -37,7 +37,6 @@ func Test_DictionaryCreate(t *testing.T) {
 			input: DictionaryCreateRequest{
 				Code:      "en",
 				Alphabet:  "abcdefghijklmnopqrstuvwxyz",
-				MaxErrors: 2,
 			},
 			wantErr:  false,
 			wantCode: status.OK,
@@ -50,7 +49,6 @@ func Test_DictionaryCreate(t *testing.T) {
 			input: DictionaryCreateRequest{
 				Code:      "en",
 				Alphabet:  "abcdefghijklmnopqrstuvwxyz",
-				MaxErrors: 2,
 			},
 			wantErr:  true,
 			wantCode: status.AlreadyExists,
@@ -63,7 +61,6 @@ func Test_DictionaryCreate(t *testing.T) {
 			input: DictionaryCreateRequest{
 				Code:      "fr",
 				Alphabet:  "abcdefghijklmnopqrstuvwxyz",
-				MaxErrors: 2,
 			},
 			wantErr:  true,
 			wantCode: status.Internal,
