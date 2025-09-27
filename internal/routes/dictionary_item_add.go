@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
+	f1mspellchecker "github.com/f1monkey/spellchecker/v2"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 )
@@ -26,39 +27,42 @@ type DictionaryItemAddResponse struct {
 }
 
 func dictionaryItemAdd(registry dictionaryGetter, splitter *regexp.Regexp) usecase.Interactor {
-	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryItemAddRequest, output *DictionaryItemAddResponse) error {
-		sc, err := registry.Get(input.Code)
-		if errors.Is(spellchecker.ErrNotFound, err) {
-			return status.Wrap(err, status.NotFound)
-		} else if err != nil {
-			return status.Wrap(err, status.Internal)
-		}
-
-		wordCnt := 0
-
-		for i := range input.Phrases {
-
-			words := splitter.FindAllString(input.Phrases[i].Text, -1)
-			if len(words) == 0 {
-				continue
+	u := usecase.NewInteractor(
+		func(ctx context.Context, input DictionaryItemAddRequest, output *DictionaryItemAddResponse) error {
+			sc, err := registry.Get(input.Code)
+			if errors.Is(spellchecker.ErrNotFound, err) {
+				return status.Wrap(err, status.NotFound)
+			} else if err != nil {
+				return status.Wrap(err, status.Internal)
 			}
 
-			weight := input.Phrases[i].Weight
-			if weight == 0 {
-				weight = 1
+			wordCnt := 0
+
+			for i := range input.Phrases {
+				words := splitter.FindAllString(input.Phrases[i].Text, -1)
+				if len(words) == 0 {
+					continue
+				}
+
+				weight := input.Phrases[i].Weight
+				if weight == 0 {
+					weight = 1
+				}
+
+				sc.Add(&f1mspellchecker.AddOptions{Weight: weight}, words...)
+				wordCnt += len(words)
 			}
 
-			sc.AddWeight(weight, words...)
-			wordCnt += len(words)
-		}
+			output.Words = wordCnt
 
-		output.Words = wordCnt
-
-		return nil
-	})
+			return nil
+		},
+	)
 
 	u.SetTitle("Add phrases/words to spellchecker")
-	u.SetDescription("Adds one or more custom phrases or words to the spellchecker dictionary. Each phrase can have an optional weight to influence matching or prioritization.")
+	u.SetDescription(
+		"Adds one or more custom phrases or words to the spellchecker dictionary. Each phrase can have an optional weight to influence matching or prioritization.",
+	)
 	u.SetExpectedErrors(status.Internal)
 
 	return u

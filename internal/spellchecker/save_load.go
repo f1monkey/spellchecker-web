@@ -65,6 +65,10 @@ func (r *Registry) doSave(code string) error {
 		return ErrNotFound
 	}
 
+	return r.doSaveItem(code, item)
+}
+
+func (r *Registry) doSaveItem(code string, item RegistryItem) error {
 	data, err := json.Marshal(&item)
 	if err != nil {
 		return err

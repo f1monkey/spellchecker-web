@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/f1monkey/spellchecker"
+	"github.com/f1monkey/spellchecker/v2"
 )
 
 type RegistryItem struct {
@@ -14,8 +14,7 @@ type RegistryItem struct {
 }
 
 type Options struct {
-	Alphabet  string `json:"alphabet"`
-	MaxErrors uint   `json:"maxErrors"`
+	Alphabet string `json:"alphabet"`
 }
 
 type src struct {

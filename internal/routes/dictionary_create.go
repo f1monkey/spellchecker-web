@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	f1mspellchecker "github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/spellchecker"
+	f1mspellchecker "github.com/f1monkey/spellchecker/v2"
 	"github.com/swaggest/usecase"
 	"github.com/swaggest/usecase/status"
 )
@@ -17,16 +17,15 @@ type registryAdder interface {
 type DictionaryCreateRequest struct {
 	Code string `path:"code" minLength:"1"`
 
-	Alphabet  string `json:"alphabet" minLength:"1"`
-	MaxErrors uint   `json:"maxErrors" minimum:"0" maximum:"5"`
+	Alphabet string `json:"alphabet" minLength:"1"`
 }
 
 func dictionaryCreate(registry registryAdder) usecase.Interactor {
 	u := usecase.NewInteractor(func(ctx context.Context, input DictionaryCreateRequest, output *Empty) error {
 		_, err := registry.Add(input.Code, spellchecker.Options{
-			Alphabet:  input.Alphabet,
-			MaxErrors: input.MaxErrors,
+			Alphabet: input.Alphabet,
 		})
+
 		if errors.Is(spellchecker.ErrAlreadyExists, err) {
 			return status.Wrap(err, status.AlreadyExists)
 		} else if err != nil {

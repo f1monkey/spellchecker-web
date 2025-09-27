@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/f1monkey/spellchecker"
 	"github.com/f1monkey/spellchecker-web/internal/logger"
+	"github.com/f1monkey/spellchecker/v2"
 )
 
 var (
@@ -72,18 +72,25 @@ func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker
 		return nil, ErrAlreadyExists
 	}
 
-	result, err := spellchecker.New(
-		options.Alphabet,
-		spellchecker.WithMaxErrors(int(options.MaxErrors)),
-	)
+	result, err := spellchecker.New(options.Alphabet)
 	if err != nil {
 		return nil, ErrSpellcheckerInit
 	}
 
-	r.items[code] = RegistryItem{
+	item := RegistryItem{
 		Spellchecker: result,
 		Options:      options,
 	}
+
+	if err := r.doSaveItem(code, item); err != nil {
+		return nil, fmt.Errorf("dictionary %q save: %w", code, err)
+	}
+
+	if err := r.doSaveMetadata(); err != nil {
+		return nil, fmt.Errorf("metadata save: %w", err)
+	}
+
+	r.items[code] = item
 
 	return result, nil
 }

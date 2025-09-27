@@ -7,7 +7,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/f1monkey/spellchecker"
+	"github.com/f1monkey/spellchecker/v2"
 	"github.com/stretchr/testify/require"
 )
 
