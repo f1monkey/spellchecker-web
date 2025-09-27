@@ -7,10 +7,36 @@ import (
 	"github.com/f1monkey/spellchecker/v2"
 )
 
-func ScoringFunc(maxErrors int, similarityThreshold float64) spellchecker.FilterFunc {
+type Fuzziness interface {
+	MaxAllowedErrors(wordLen int) int
+}
+
+type FixedFuzziness int
+
+func (f FixedFuzziness) MaxAllowedErrors(_ int) int {
+	return int(f)
+}
+
+type AutoFuzziness struct {
+	Low, High int
+}
+
+func (a AutoFuzziness) MaxAllowedErrors(wordLen int) int {
+	if wordLen < a.Low {
+		return 0
+	}
+
+	if wordLen < a.High {
+		return 1
+	}
+
+	return 2
+}
+
+func ScoringFunc(fuzziness Fuzziness, similarityThreshold float64) spellchecker.FilterFunc {
 	return func(src, candidate []rune, count uint) (float64, bool) {
 		distance, prefixLen, suffixLen := levenshtein.Calculate(src, candidate, 0, 1, 1, 1)
-		if distance > maxErrors {
+		if distance > fuzziness.MaxAllowedErrors(len(src)) {
 			return 0, false
 		}
 
