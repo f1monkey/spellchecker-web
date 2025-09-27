@@ -75,6 +75,12 @@ func (r *Registry) Add(code string, options Options) (*spellchecker.Spellchecker
 	result, err := spellchecker.New(
 		options.Alphabet,
 		spellchecker.WithMaxErrors(int(options.MaxErrors)),
+		spellchecker.WithFilterFunc(
+			ScoringFunc(
+				int(options.MaxErrors),
+				options.SimilarityThreshold,
+			),
+		),
 	)
 	if err != nil {
 		return nil, ErrSpellcheckerInit
